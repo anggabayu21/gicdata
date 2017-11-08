@@ -45,12 +45,12 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
     filter_backends = (filters.XFormListObjectPermissionFilter,
                        filters.XFormListXFormPKFilter)
     queryset = XForm.objects.filter(downloadable=True, deleted_at=None,
-                                    is_merged_dataset=False)
+                                    is_merged_dataset=False, shared=True)
     permission_classes = (permissions.AllowAny,)
     renderer_classes = (XFormListRenderer,)
     serializer_class = XFormListSerializer
     template_name = 'api/xformsList.xml'
-
+   
     def get_openrosa_headers(self):
         tz = pytz.timezone(settings.TIME_ZONE)
         dt = datetime.now(tz).strftime('%a, %d %b %Y %H:%M:%S %Z')
@@ -85,7 +85,7 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
             self.permission_denied(self.request)
 
         profile = None
-        if username is not None:
+        if username is not None: 
             profile = get_object_or_404(
                 UserProfile, user__username=username.lower())
 
@@ -93,25 +93,29 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
             else:
-                queryset = queryset.filter(
-                    user=profile.user, downloadable=True)
-
-        queryset = super(XFormListViewSet, self).filter_queryset(queryset)
+                queryset = queryset.filter(user=profile.user, downloadable=True)
+        
+        #print("TEST")
+        #queryset_user = super(XFormListViewSet, self).filter_queryset(queryset)
         if not self.request.user.is_anonymous():
+            #new code
+            queryset = queryset.filter(downloadable=True,shared=True)
+            #queryset = super(XFormListViewSet, self).filter_queryset(queryset)
+
             xform_pk = self.kwargs.get('xform_pk')
-            if self.action == 'list' and profile and xform_pk is None:
+            if self.action == 'list' and profile and xform_pk is None:   
                 forms_shared_with_user = get_forms_shared_with_user(
                     profile.user)
                 queryset = queryset | forms_shared_with_user
                 if self.request.user != profile.user:
-                    public_forms = profile.user.xforms.filter(
-                        downloadable=True, shared=True)
+                    public_forms = profile.user.xforms.filter(downloadable=True, shared=True)
                     queryset = queryset | public_forms
 
         return queryset
 
     @never_cache
     def list(self, request, *args, **kwargs):
+        print("TEST LIST")
         self.object_list = self.filter_queryset(self.get_queryset())
 
         serializer = self.get_serializer(self.object_list, many=True)

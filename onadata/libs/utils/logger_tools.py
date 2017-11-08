@@ -173,10 +173,18 @@ def check_submission_permissions(request, xform):
     :returns: None.
     :raises: PermissionDenied based on the above criteria.
     """
+    print("PERMISSION")
+    print(request)
+    print(xform.user.profile.require_auth)
+    print(xform.require_auth)
+    print(request.path)
+    print(xform.user)
+    print(request.user)
+    print(request.user.has_perm('report_xform', xform))
     if request and (xform.user.profile.require_auth or xform.require_auth or
                     request.path == '/submission')\
             and xform.user != request.user\
-            and not request.user.has_perm('report_xform', xform):
+            and not request.user.has_perm('report_xform', xform) and not xform.shared:
         raise PermissionDenied(
             _(u"%(request_user)s is not allowed to make submissions "
               u"to %(form_user)s's %(form_title)s form." % {

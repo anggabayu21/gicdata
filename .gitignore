@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /core
 /data
 /src
@@ -74,3 +75,9 @@ bob
 # visual studio code
 .vscode/
 tags
+=======
+
+!.gitignore
+*.pyc
+__init__.py
+>>>>>>> 7d00134bcd8e7350c1f0ead4124f5d61c59dfc33
