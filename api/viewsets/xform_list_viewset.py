@@ -128,7 +128,7 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
 
     @never_cache
     def list(self, request, *args, **kwargs):
-        print("TEST LIST")
+        print("TEST LIST1")
         self.object_list = self.filter_queryset(self.get_queryset())
 
         serializer = self.get_serializer(self.object_list, many=True)
