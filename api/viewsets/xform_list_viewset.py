@@ -45,7 +45,7 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
     filter_backends = (filters.XFormListObjectPermissionFilter,
                        filters.XFormListXFormPKFilter)
     queryset = XForm.objects.filter(downloadable=True, deleted_at=None,
-                                    is_merged_dataset=False, shared=True)
+                                    is_merged_dataset=False)
     permission_classes = (permissions.AllowAny,)
     renderer_classes = (XFormListRenderer,)
     serializer_class = XFormListSerializer
@@ -95,12 +95,26 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
             else:
                 queryset = queryset.filter(user=profile.user, downloadable=True)
         
-        #print("TEST")
-        queryset_user = super(XFormListViewSet, self).filter_queryset(queryset)
+        queryset_all = queryset
+        queryset = super(XFormListViewSet, self).filter_queryset(queryset)
+
         if not self.request.user.is_anonymous():
             #new code
-            queryset = queryset.filter(downloadable=True,shared=True)
+            new_result = []
+
+            queryset_shared = queryset_all.filter(downloadable=True, shared = True)
+            if(queryset_shared):
+                for result_ in queryset_shared:
+                    new_result.append(result_)
             
+            queryset_shared_false = queryset.filter(downloadable=True, shared = False)
+            if(queryset_shared_false):
+                for result_ in queryset_shared_false:
+                    new_result.append(result_)
+
+            if(len(new_result)>0):     
+                queryset = new_result
+
             xform_pk = self.kwargs.get('xform_pk')
             if self.action == 'list' and profile and xform_pk is None:   
                 forms_shared_with_user = get_forms_shared_with_user(
@@ -114,7 +128,6 @@ class XFormListViewSet(ETagsMixin, BaseViewset,
 
     @never_cache
     def list(self, request, *args, **kwargs):
-        print("TEST LIST")
         self.object_list = self.filter_queryset(self.get_queryset())
 
         serializer = self.get_serializer(self.object_list, many=True)
